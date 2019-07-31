@@ -1,11 +1,11 @@
 
 using System.Threading.Tasks;
-using checkoutcom.paymentgateway.Models;
+using checkoutcom.paymentgateway.Models.DTO;
 
 namespace checkoutcom.paymentgateway.Contracts
 {
     public interface IBankApiHttpClient
     {
-        Task<Transaction> ProcessPaymentAsync(PaymentDetails payment);
+        Task<BankTransaction> ProcessPaymentAsync(PaymentDetails payment);
     }
 }

@@ -11,5 +11,6 @@ namespace checkoutcom.paymentgateway.Models
         public DateTime ExpireAt {get; set; }
         public string CVV { get; set; }
         public Guid TransactionId { get; set; }
+        public Guid IdempotencyKey { get; set;}
     }
 }

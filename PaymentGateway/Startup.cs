@@ -12,6 +12,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using checkoutcom.paymentgateway.Models;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
 
 namespace checkoutcom.paymentgateway
 {
@@ -48,6 +50,24 @@ namespace checkoutcom.paymentgateway
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+            });
+
+            ConfigureRequestLocalization(app);
+        }
+
+        private void ConfigureRequestLocalization(IApplicationBuilder app)
+        {
+            var supportedCultures = new[]
+            {
+                new CultureInfo("en-US"),
+                new CultureInfo("de-DE"),
+            };
+
+            app.UseRequestLocalization(new RequestLocalizationOptions
+            {
+                DefaultRequestCulture = new RequestCulture("en-US"),
+                SupportedCultures = supportedCultures,
+                SupportedUICultures = supportedCultures
             });
         }
     }

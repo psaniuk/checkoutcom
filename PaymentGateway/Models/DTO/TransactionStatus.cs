@@ -1,5 +1,5 @@
 
-namespace checkoutcom.paymentgateway.Models
+namespace checkoutcom.paymentgateway.Models.DTO
 {
     public enum TransactionStatus
     {

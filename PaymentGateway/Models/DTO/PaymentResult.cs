@@ -1,4 +1,7 @@
-public class PaymentResult  
+namespace checkoutcom.paymentgateway.Models.DTO
 {
-    public string Id { get; set; }
+    public class PaymentResult  
+    {
+        public string Id { get; set; }
+    }
 }

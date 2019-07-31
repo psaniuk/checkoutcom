@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using checkoutcom.paymentgateway.Contracts;
 using checkoutcom.paymentgateway.Exceptons;
+using checkoutcom.paymentgateway.Models.DTO;
 
 namespace checkoutcom.paymentgateway.Controllers
 {

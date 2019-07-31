@@ -1,8 +1,11 @@
-public class PaymentDetails
+namespace checkoutcom.paymentgateway.Models.DTO
 {
-    public string CardNumber { get; set; }
-    public string Amount { get; set; }
-    public string Currency { get; set; }
-    public string ExpireAt { get; set; }
-    public string CVV { get; set; }
+    public class PaymentDetails
+    {
+        public string CardNumber { get; set; }
+        public string Amount { get; set; }
+        public string Currency { get; set; }
+        public string ExpireAt { get; set; }
+        public string CVV { get; set; }
+    }
 }
