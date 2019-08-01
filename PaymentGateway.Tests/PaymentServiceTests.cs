@@ -124,6 +124,17 @@ namespace PaymentGateway.Tests
             await Assert.ThrowsAsync<ProcessPaymentException>(async () => await paymentService.ProcessPaymentAsync(paymentDetails));
         }
 
+        [Fact]
+        public async Task Unhandled_Exception_Occurs_Assume_ProcessPaymentAsync_Throws_ProcessPaymentException()
+        {
+            var paymentDetails = CreatePaymentDetails();
+            var paymentDetailsRepository = new Mock<IPaymentDetailsRepository>();
+            paymentDetailsRepository.Setup(x => x.AddAsync(It.IsAny<Payment>())).ThrowsAsync(new Exception());
+            var paymentService = CreatePaymentService(paymentDetailsRepository: paymentDetailsRepository.Object);
+            
+            await Assert.ThrowsAsync<ProcessPaymentException>(async () => await paymentService.ProcessPaymentAsync(paymentDetails));
+        }   
+
         private PaymentDetails CreatePaymentDetails(string cardNumber = "1234-1234-1234-1234", string currency = "EUR", string amount = "12.5", string cvv = "123", string expireAt = "12/23") =>
             new PaymentDetails() 
             { 
