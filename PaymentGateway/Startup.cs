@@ -14,6 +14,8 @@ using Microsoft.EntityFrameworkCore;
 using checkoutcom.paymentgateway.Models;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
+using checkoutcom.paymentgateway.Contracts;
+using checkoutcom.paymentgateway.Services;
 
 namespace checkoutcom.paymentgateway
 {
@@ -31,6 +33,10 @@ namespace checkoutcom.paymentgateway
         {
             services.AddDbContext<PaymentGatewayDbContext>(options => options.UseInMemoryDatabase("PaymentGatewayDb"));
             services.AddControllers();
+            services.AddScoped<IBankApiHttpClient, BankApiHttpClientMock>();
+            services.AddScoped<ICurrencyRepository, CurrencyRepository>();
+            services.AddScoped<IPaymentDetailsRepository, PaymentDetailsRepository>();
+            services.AddScoped<IPaymentService, PaymentService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

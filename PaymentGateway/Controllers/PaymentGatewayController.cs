@@ -10,7 +10,6 @@ using checkoutcom.paymentgateway.Models.DTO;
 namespace checkoutcom.paymentgateway.Controllers
 {
     [ApiController]
-    [Route("payments")]
     public class PaymentGatewayController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
@@ -21,8 +20,13 @@ namespace checkoutcom.paymentgateway.Controllers
             _paymentService = paymentService;
             _logger = logger;
         }
+        
+        [HttpGet]
+        [Route("health")]
+        public ActionResult Health() => Ok("Alive");
 
         [HttpPost]
+        [Route("payments")]
         public async Task<ActionResult> Post(PaymentDetails paymentDetails)
         {
             try
