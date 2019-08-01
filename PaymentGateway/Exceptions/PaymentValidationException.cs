@@ -2,7 +2,7 @@ using System;
 
 namespace checkoutcom.paymentgateway.Exceptons
 {
-    public class PaymentValidationException: Exception
+    public class PaymentValidationException: System.Exception
     {
         public PaymentValidationException(string error): base(error)
         {

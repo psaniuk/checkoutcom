@@ -4,13 +4,12 @@ namespace checkoutcom.paymentgateway.Models
 {
     public class Payment
     {
-        public Guid Id { get; set; }
-        public CardNumber CardNumber { get; set; } = CardNumber.Empty;
+        public Guid Id { get; set; } = Guid.NewGuid();
+        public CardNumber CardNumber { get; set; }
         public decimal Amount { get; set; }
-        public Currency Currency { get; set; } = Currency.Empty;
+        public Currency Currency { get; set; }
         public DateTime ExpireAt {get; set; }
-        public string CVV { get; set; }
-        public Guid TransactionId { get; set; }
-        public Guid IdempotencyKey { get; set;}
+        public string CVV { get; set; } = string.Empty;
+        public Guid TransactionId { get; set; } = Guid.Empty;
     }
 }

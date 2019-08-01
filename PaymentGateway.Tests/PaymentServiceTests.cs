@@ -1,9 +1,11 @@
 using System;
 using Xunit;
+using Moq;
 using System.Threading.Tasks;
 using checkoutcom.paymentgateway.Exceptons;
 using checkoutcom.paymentgateway.Contracts;
 using checkoutcom.paymentgateway.Services;
+using checkoutcom.paymentgateway.Models;
 using checkoutcom.paymentgateway.Models.DTO;
 using System.Globalization;
 
@@ -105,10 +107,71 @@ namespace PaymentGateway.Tests
             await Assert.ThrowsAsync<PaymentValidationException>(async () => await CreatePaymentService().ProcessPaymentAsync(paymentDetails));                        
         }
 
+        [Fact]
+        public async Task Given_RUB_As_Currency_Assume_ProcessPaymentAsync_Throws_PaymentValidationException()
+        {
+            var paymentDetails = CreatePaymentDetails(currency: "RUB");
+            await Assert.ThrowsAsync<PaymentValidationException>(async () => await CreatePaymentService().ProcessPaymentAsync(paymentDetails));
+        }
+
+        [Fact]
+        public async Task Given_Not_Sucess_Bank_Transaction_Assume_ProcessPaymentAsync_Throws_ProcessPaymentException()
+        {
+            var paymentDetails = CreatePaymentDetails();
+            var bankHttpClientMock = SetupBankApiHttpClientMock(new BankTransaction(){ Status = TransactionStatus.Error });
+            var paymentService = CreatePaymentService(bankApiHttpClient: bankHttpClientMock);
+
+            await Assert.ThrowsAsync<ProcessPaymentException>(async () => await paymentService.ProcessPaymentAsync(paymentDetails));
+        }
+
         private PaymentDetails CreatePaymentDetails(string cardNumber = "1234-1234-1234-1234", string currency = "EUR", string amount = "12.5", string cvv = "123", string expireAt = "12/23") =>
-            new PaymentDetails() { CardNumber = cardNumber, Amount = amount, Currency = currency, ExpireAt = expireAt, CVV = cvv };        
-        private PaymentService CreatePaymentService(IBankApiHttpClient bankApiHttpClient = null, IPaymentDetailsRepository repository = null) =>  
-            new PaymentService(bankApiHttpClient, repository);
-        
+            new PaymentDetails() 
+            { 
+                CardNumber = cardNumber, 
+                Amount = amount, 
+                Currency = currency, 
+                ExpireAt = expireAt, 
+                CVV = cvv 
+            };  
+
+        private ICurrencyRepository SetupCurrencyRepositoryMock(string currencyCode = "EUR")
+        {
+            var mock = new Mock<ICurrencyRepository>();
+            var currency = new Currency(){ Code = currencyCode, Symbol = currencyCode };
+            mock.Setup(x => x.FindBy(currencyCode)).ReturnsAsync(currency);
+
+            return mock.Object;
+        }   
+
+        private IPaymentDetailsRepository SetupPaymentDetailsRepositoryMock()
+        {
+            var mock = new Mock<IPaymentDetailsRepository>();
+            return mock.Object;
+        }
+
+        private IBankApiHttpClient SetupBankApiHttpClientMock(BankTransaction transaction = null)
+        {
+             if (transaction == null)
+                transaction = new BankTransaction(){ Id = Guid.NewGuid(), Status = TransactionStatus.Success };
+
+            var mock = new Mock<IBankApiHttpClient>();
+            mock.Setup(x => x.SubmitPaymentAsync(It.IsAny<PaymentDetails>())).ReturnsAsync(transaction);
+
+            return mock.Object;
+        }
+
+        private PaymentService CreatePaymentService(IBankApiHttpClient bankApiHttpClient = null, IPaymentDetailsRepository paymentDetailsRepository = null, ICurrencyRepository currencyRepository = null) 
+        {
+            if (bankApiHttpClient == null)
+                bankApiHttpClient = SetupBankApiHttpClientMock();
+
+            if (paymentDetailsRepository == null)
+                paymentDetailsRepository = SetupPaymentDetailsRepositoryMock();
+
+            if (currencyRepository == null)
+                currencyRepository = SetupCurrencyRepositoryMock();
+
+            return new PaymentService(bankApiHttpClient, paymentDetailsRepository, currencyRepository);
+        }         
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-using System.Linq;
 using System.Globalization;
 using checkoutcom.paymentgateway.Contracts;
 using checkoutcom.paymentgateway.Exceptons;
@@ -17,39 +16,70 @@ namespace checkoutcom.paymentgateway.Services
         private readonly Regex _cvvRegex = new Regex(@"^(?!000)\d{3,4}$");
         private readonly IBankApiHttpClient _bankApiClient;
         private readonly IPaymentDetailsRepository _paymentDetailsRepository;
+        private readonly ICurrencyRepository _currencyRepository;
 
-        public PaymentService(IBankApiHttpClient bankApiHttpClient, IPaymentDetailsRepository paymentDetailsRepository)
+        public PaymentService(IBankApiHttpClient bankApiHttpClient, IPaymentDetailsRepository paymentDetailsRepository, ICurrencyRepository currencyRepository)
         {
             _bankApiClient = bankApiHttpClient;
             _paymentDetailsRepository = paymentDetailsRepository;
+            _currencyRepository = currencyRepository;
         }
 
-        public Task<Guid> ProcessPaymentAsync(PaymentDetails payment)
+        public async Task<Guid> ProcessPaymentAsync(PaymentDetails paymentDetails)
         {
-            if (payment == null)
-                throw new ArgumentNullException(nameof(payment));
+            if (paymentDetails == null)
+                throw new ArgumentNullException(nameof(paymentDetails));
 
-            Validate(payment);
-
-            return Task.FromResult(Guid.NewGuid());
+            try
+            {
+                Payment payment = await ConvertToPaymentIfValid(paymentDetails);
+                BankTransaction transaction = await _bankApiClient.SubmitPaymentAsync(paymentDetails);
+                if (transaction == null || transaction.Status != TransactionStatus.Success)
+                    throw new ProcessPaymentException("Failed to submit a payment to a bank");
+            
+                payment.TransactionId = transaction.Id;
+                await _paymentDetailsRepository.AddAsync(payment);
+                
+                return payment.Id;
+            }
+            catch (Exception exp) when (!(exp is PaymentValidationException))
+            {
+                throw new ProcessPaymentException("An error has occured while processing a payment", exp);
+            }
         }
 
-        private void Validate(PaymentDetails payment)
+        private async Task<Payment> ConvertToPaymentIfValid(PaymentDetails payment)
         {
             if (!IsCardNumberValid(payment.CardNumber))
                 throw new PaymentValidationException("Card number is not valid");
             
-            if (!decimal.TryParse(payment.Amount, NumberStyles.AllowDecimalPoint, CultureInfo.CurrentCulture, out decimal result))
+            if (!decimal.TryParse(payment.Amount, NumberStyles.AllowDecimalPoint, CultureInfo.CurrentCulture, out decimal amount))
                 throw new PaymentValidationException("Amount is not valid");
 
             if (string.IsNullOrWhiteSpace(payment.Currency))
-                throw new PaymentValidationException("Currency is required");
+                throw new PaymentValidationException("Currency is not valid");
             
-            if (!IsExpireAtValid(payment.ExpireAt))
+            var currency = await _currencyRepository.FindBy(payment.Currency);
+            if (currency == null)
+                throw new PaymentValidationException("Currency is not valid");
+
+            var expireAt = ParseExpireAt(payment.ExpireAt);
+            if (expireAt < DateTime.UtcNow)
                 throw new PaymentValidationException("ExpireAt is not valid");
             
             if (!IsCvvNumberValid(payment.CVV))
                 throw new PaymentValidationException("CVV is not valid");
+
+            var cardNumber = new CardNumber() { Value = payment.CardNumber };
+
+            return new Payment() 
+            {
+                CardNumber = cardNumber,
+                Amount = amount,
+                Currency = currency,
+                ExpireAt = expireAt,
+                CVV = payment.CVV,
+            };
         }
         
         private bool IsCardNumberValid(string cardNumber)
@@ -63,22 +93,22 @@ namespace checkoutcom.paymentgateway.Services
             return true;
         }
 
-        private bool IsExpireAtValid(string expireAt)
+        private DateTime ParseExpireAt(string expireAt)
         {
             if (string.IsNullOrWhiteSpace(expireAt))
-                return false;
+                return DateTime.MinValue;
 
             if (!_expireAtRegex.IsMatch(expireAt))
-                return false;
+                return DateTime.MinValue;
 
             var dateParts = expireAt.Split('/'); 
             var month = int.Parse(dateParts[0]);     
-            var year = DateTime.Now.Year - DateTime.Now.Year % 100 + int.Parse(dateParts[1]);   
+            var year = DateTime.UtcNow.Year - DateTime.UtcNow.Year % 100 + int.Parse(dateParts[1]);   
 
             var lastDateOfExpiryMonth = DateTime.DaysInMonth(year, month); 
             var cardExpiry = new DateTime(year, month, lastDateOfExpiryMonth, 23, 59, 59);  
 
-            return cardExpiry > DateTime.Now;
+            return cardExpiry;
         }
 
         private bool IsCvvNumberValid(string cvv)
