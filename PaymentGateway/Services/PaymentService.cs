@@ -63,18 +63,16 @@ namespace checkoutcom.paymentgateway.Services
             if (currency == null)
                 throw new PaymentValidationException("Currency is not valid");
 
-            var expireAt = ParseExpireAt(payment.ExpireAt);
+            var expireAt = ParseExpireAt(payment.ExpiryAt);
             if (expireAt < DateTime.UtcNow)
                 throw new PaymentValidationException("ExpireAt is not valid");
             
             if (!IsCvvNumberValid(payment.CVV))
                 throw new PaymentValidationException("CVV is not valid");
 
-            var cardNumber = new CardNumber() { Value = payment.CardNumber };
-
             return new Payment() 
             {
-                CardNumber = cardNumber,
+                CardNumber = payment.CardNumber,
                 Amount = amount,
                 Currency = currency,
                 ExpireAt = expireAt,

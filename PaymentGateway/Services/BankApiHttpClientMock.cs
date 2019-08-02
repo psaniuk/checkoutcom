@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using checkoutcom.paymentgateway.Contracts;
 using checkoutcom.paymentgateway.Models.DTO;
@@ -8,7 +9,7 @@ namespace checkoutcom.paymentgateway.Services
     {
         public Task<BankTransaction> SubmitPaymentAsync(PaymentDetails payment)
         {
-            throw new System.NotImplementedException();
+           return Task.FromResult(new BankTransaction(){ Id = Guid.NewGuid(), Status = TransactionStatus.Success });
         }
     }
 }

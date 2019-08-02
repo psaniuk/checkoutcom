@@ -7,19 +7,15 @@ namespace checkoutcom.paymentgateway.Services
 {
     public class PaymentDetailsRepository : IPaymentDetailsRepository
     {
-        public Task AddAsync(Payment payment)
+        private PaymentGatewayDbContext _dbContext;
+
+        public PaymentDetailsRepository(PaymentGatewayDbContext dbContext) => _dbContext = dbContext;
+        public async Task AddAsync(Payment payment)
         {
-            throw new NotImplementedException();
+            await _dbContext.AddAsync(payment);
+            await _dbContext.SaveChangesAsync();
         }
 
-        public Task<Payment> FindBy(Guid idempotencyKey)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<Payment> GetAsync(Guid id)
-        {
-            throw new NotImplementedException();
-        }
+        public Task<Payment> FindBy(Guid id) => _dbContext.Payments.FindAsync(id);
     }
 }

@@ -141,7 +141,7 @@ namespace PaymentGateway.Tests
                 CardNumber = cardNumber, 
                 Amount = amount, 
                 Currency = currency, 
-                ExpireAt = expireAt, 
+                ExpiryAt = expireAt, 
                 CVV = cvv 
             };  
 

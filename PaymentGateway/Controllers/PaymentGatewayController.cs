@@ -32,7 +32,7 @@ namespace checkoutcom.paymentgateway.Controllers
             try
             {
                 Guid paymentId = await _paymentService.ProcessPaymentAsync(paymentDetails);
-                return CreatedAtAction(nameof(PaymentResult), new { id = paymentId});
+                return CreatedAtAction("post", new { id = paymentId});
             }
             catch (PaymentValidationException validationException)
             {
