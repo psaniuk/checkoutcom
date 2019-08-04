@@ -25,6 +25,14 @@ namespace checkoutcom.paymentgateway.Services
             _currencyRepository = currencyRepository;
         }
 
+        public async Task<Payment> FindAsync(Guid id)
+        {
+            if (id == Guid.Empty)
+                throw new ArgumentException("Payment can't be empty"); 
+
+            return await _paymentDetailsRepository.FindAsync(id);
+        }
+
         public async Task<Guid> ProcessPaymentAsync(PaymentDetails paymentDetails)
         {
             if (paymentDetails == null)

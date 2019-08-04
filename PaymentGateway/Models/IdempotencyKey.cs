@@ -1,0 +1,25 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace checkoutcom.paymentgateway.Models
+{
+    public class IdempotencyKey
+    {
+        public IdempotencyKey(Guid id, Guid paymentId)
+        {
+            if (id == Guid.Empty)
+                throw new ArgumentException("id can't be empty");
+
+            if (paymentId == Guid.Empty)
+                throw new ArgumentException("Payment id can't be empty");
+                    
+            Id = id;
+            PaymentId = paymentId;
+        }
+
+        [Key]
+        public Guid Id { get; set; }
+        
+        public Guid PaymentId { get; set; }
+    }
+}

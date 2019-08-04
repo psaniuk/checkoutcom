@@ -11,5 +11,6 @@ namespace checkoutcom.paymentgateway.Models
 
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Currency> Currencies { get; set; }
+        public DbSet<IdempotencyKey> idempotencyKeys { get; set; }
     }
 }

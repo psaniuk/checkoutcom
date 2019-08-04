@@ -37,6 +37,7 @@ namespace checkoutcom.paymentgateway
             services.AddScoped<ICurrencyRepository, CurrencyRepository>();
             services.AddScoped<IPaymentDetailsRepository, PaymentDetailsRepository>();
             services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<IIdempotencyKeyRepository, IdempotencyKeyRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

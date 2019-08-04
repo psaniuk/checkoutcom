@@ -4,9 +4,9 @@ using checkoutcom.paymentgateway.Models;
 
 namespace checkoutcom.paymentgateway.Contracts
 {
-    public interface IPaymentDetailsRepository
+    public interface IIdempotencyKeyRepository
     {
-        Task AddAsync(Payment payment);
-        Task<Payment> FindAsync(Guid id);
+        Task AddAsync(IdempotencyKey key);
+        Task<IdempotencyKey> FindAsync(Guid key);
     }
 }
