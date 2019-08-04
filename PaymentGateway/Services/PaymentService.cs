@@ -82,7 +82,7 @@ namespace checkoutcom.paymentgateway.Services
             {
                 CardNumber = payment.CardNumber,
                 Amount = amount,
-                Currency = currency,
+                CurrencyCode = payment.Currency,
                 ExpireAt = expireAt,
                 CVV = payment.CVV,
             };

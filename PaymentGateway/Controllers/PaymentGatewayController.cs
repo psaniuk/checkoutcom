@@ -34,21 +34,21 @@ namespace checkoutcom.paymentgateway.Controllers
         [HttpGet]
         [Route("payments/{id}")]
         public async Task<ActionResult> Get(string id)
-        {
-            if (string.IsNullOrWhiteSpace(id) || !Guid.TryParse(id, out Guid paymentId))
-                return BadRequest("ID is not valid");
-
+        { 
             try
             {
+                if (string.IsNullOrWhiteSpace(id) || !Guid.TryParse(id, out Guid paymentId))
+                    return BadRequest("ID is not valid");
+
                 var payment = await _paymentService.FindAsync(paymentId);
                 if (payment == null)
                     return NotFound();
 
-                return Ok(payment);    
+                return Ok(new { cardNumber = payment.CardNumber, expiryAt = payment.ExpireAt});    
             }
             catch(Exception exception)
             {
-                _logger.Log(LogLevel.Critical, exception, "An unhandled error has occured while GET a payment by id");
+                _logger.Log(LogLevel.Critical, exception, "An unhandled error has occured while GET a payment");
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
@@ -60,7 +60,7 @@ namespace checkoutcom.paymentgateway.Controllers
             try
             {
                 if (!ParseIdempotencyKey(out Guid idempotencyId))
-                    return BadRequest($"{IdempotencyKeyHeader} header is required");
+                    return BadRequest($"{IdempotencyKeyHeader} header is not valid");
 
                 var idempotencyKey = await _idempotencyRepository.FindAsync(idempotencyId);
                 if (idempotencyKey != null)
@@ -86,7 +86,7 @@ namespace checkoutcom.paymentgateway.Controllers
         {
             key = Guid.Empty;
 
-            if (!Request.Headers.TryGetValue("IdempotencyKeyHeader", out StringValues idempotencyKey))
+            if (!Request.Headers.TryGetValue(IdempotencyKeyHeader, out StringValues idempotencyKey))
                 return false;
 
             string keyValue = idempotencyKey.ToArray().FirstOrDefault();
