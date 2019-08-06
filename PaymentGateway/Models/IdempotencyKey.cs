@@ -18,8 +18,8 @@ namespace checkoutcom.paymentgateway.Models
         }
 
         [Key]
-        public Guid Id { get; set; }
+        public Guid Id { get; private set; }
         
-        public Guid PaymentId { get; set; }
+        public Guid PaymentId { get; private set; }
     }
 }
