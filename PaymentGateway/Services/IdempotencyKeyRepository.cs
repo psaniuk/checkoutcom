@@ -13,10 +13,19 @@ namespace checkoutcom.paymentgateway.Services
 
         public async Task AddAsync(IdempotencyKey key)
         {
+            if (key == null)
+                throw new ArgumentNullException();
+
             await _dbContext.AddAsync(key);
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<IdempotencyKey> FindAsync(Guid key) => await _dbContext.IdempotencyKeys.FindAsync(key);
+        public async Task<IdempotencyKey> FindAsync(Guid key)
+        {
+            if (key == Guid.Empty)
+                throw new ArgumentException("Key is required");
+                 
+            return await _dbContext.IdempotencyKeys.FindAsync(key);
+        }
     }
 }
