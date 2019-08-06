@@ -13,5 +13,6 @@ namespace checkoutcom.paymentgateway.Models
         public DateTime ExpireAt {get; set; }
         public string CVV { get; set; } = string.Empty;
         public Guid TransactionId { get; set; } = Guid.Empty;
+        public PaymentStatus Status {get; set; }
     }
 }

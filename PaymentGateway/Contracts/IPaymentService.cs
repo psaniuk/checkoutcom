@@ -8,6 +8,6 @@ namespace checkoutcom.paymentgateway.Contracts
     public interface IPaymentService
     {
         Task<Payment> FindAsync(Guid id);
-        Task<Guid> ProcessPaymentAsync(PaymentDetails payment);
+        Task<Payment> ProcessPaymentAsync(PaymentDetails payment);
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-using System.Globalization;
 using checkoutcom.paymentgateway.Contracts;
 using checkoutcom.paymentgateway.Exceptons;
 using checkoutcom.paymentgateway.Models;
@@ -33,7 +32,7 @@ namespace checkoutcom.paymentgateway.Services
             return await _paymentDetailsRepository.FindAsync(id);
         }
 
-        public async Task<Guid> ProcessPaymentAsync(PaymentDetails paymentDetails)
+        public async Task<Payment> ProcessPaymentAsync(PaymentDetails paymentDetails)
         {
             if (paymentDetails == null)
                 throw new ArgumentNullException(nameof(paymentDetails));
@@ -41,16 +40,21 @@ namespace checkoutcom.paymentgateway.Services
             try
             {
                 Payment payment = await ConvertToPaymentIfValid(paymentDetails);
-                BankTransaction transaction = await _bankApiClient.SubmitPaymentAsync(paymentDetails);
-                if (transaction == null || transaction.Status != TransactionStatus.Success)
+                Transaction transaction = await _bankApiClient.SubmitPaymentAsync(paymentDetails);
+                if (transaction == null)
                     throw new ProcessPaymentException("Failed to submit a payment to a bank");
             
+                if (Enum.IsDefined(typeof(PaymentStatus), transaction.Status))
+                    payment.Status = (PaymentStatus)transaction.Status;
+                else
+                    throw new ProcessPaymentException("Payment status is unkown");
+
                 payment.TransactionId = transaction.Id;
                 await _paymentDetailsRepository.AddAsync(payment);
                 
-                return payment.Id;
+                return payment;
             }
-            catch (Exception exp) when (!(exp is PaymentValidationException))
+            catch (Exception exp) when (!(exp is PaymentValidationException) && !(exp is ProcessPaymentException))
             {
                 throw new ProcessPaymentException("An error has occured while processing a payment", exp);
             }
@@ -61,7 +65,7 @@ namespace checkoutcom.paymentgateway.Services
             if (!IsCardNumberValid(payment.CardNumber))
                 throw new PaymentValidationException("Card number is not valid");
             
-            if (!decimal.TryParse(payment.Amount, NumberStyles.AllowDecimalPoint, CultureInfo.CurrentCulture, out decimal amount))
+            if (payment.Amount <= 0)
                 throw new PaymentValidationException("Amount is not valid");
 
             if (string.IsNullOrWhiteSpace(payment.Currency))
@@ -78,10 +82,12 @@ namespace checkoutcom.paymentgateway.Services
             if (!IsCvvNumberValid(payment.CVV))
                 throw new PaymentValidationException("CVV is not valid");
 
+            decimal amountValue = payment.Amount / 100;
+
             return new Payment() 
             {
-                CardNumber = payment.CardNumber,
-                Amount = amount,
+                CardNumber = MaskCardNumber(payment.CardNumber),
+                Amount = amountValue,
                 CurrencyCode = payment.Currency,
                 ExpireAt = expireAt,
                 CVV = payment.CVV,
@@ -124,5 +130,7 @@ namespace checkoutcom.paymentgateway.Services
             
             return true;
         }
+
+        private string MaskCardNumber(string cardNumber) => $"XXXX-XXXX-XXXX-{cardNumber.Substring(cardNumber.Length - 4, 4)}";
     }
 }

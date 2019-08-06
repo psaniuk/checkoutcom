@@ -17,6 +17,6 @@ namespace checkoutcom.paymentgateway.Services
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<IdempotencyKey> FindAsync(Guid key) => await _dbContext.idempotencyKeys.FindAsync(key);
+        public async Task<IdempotencyKey> FindAsync(Guid key) => await _dbContext.IdempotencyKeys.FindAsync(key);
     }
 }

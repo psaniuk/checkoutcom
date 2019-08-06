@@ -7,7 +7,6 @@ using checkoutcom.paymentgateway.Contracts;
 using checkoutcom.paymentgateway.Services;
 using checkoutcom.paymentgateway.Models;
 using checkoutcom.paymentgateway.Models.DTO;
-using System.Globalization;
 
 namespace PaymentGateway.Tests
 {
@@ -22,9 +21,9 @@ namespace PaymentGateway.Tests
         }
 
         [Fact]
-        public async Task Given_Empty_Amount_Assume_ProcessPaymentAsync_throws_PaymentValidationException()
+        public async Task Given_Zero_As_Amount_Assume_ProcessPaymentAsync_throws_PaymentValidationException()
         {
-            var paymentDetails = CreatePaymentDetails(amount: string.Empty) ;
+            var paymentDetails = CreatePaymentDetails(amount: 0) ;
             await Assert.ThrowsAsync<PaymentValidationException>(async () => await CreatePaymentService().ProcessPaymentAsync(paymentDetails));
         }
 
@@ -67,37 +66,16 @@ namespace PaymentGateway.Tests
         public async Task Given_1234123412341234_As_CardNumber_Assume_ProcessPaymnetAsync_Is_Successfull()
         {
             var paymentDetails = CreatePaymentDetails(cardNumber: "1234123412341234") ;
-            var id = await CreatePaymentService().ProcessPaymentAsync(paymentDetails);
+            var payment = await CreatePaymentService().ProcessPaymentAsync(paymentDetails);
             
-            Assert.True(id != Guid.Empty);
+            Assert.NotNull(payment);
         }
 
         [Fact]
-        public async Task Given_12z_As_Amount_Assume_ProcessPaymentAsync_Throws_PaymentValidationException()
+        public async Task Given_Negative_Amount_Assume_ProcessPaymentAsync_Throws_PaymentValidationException()
         {
-            var paymentDetails = CreatePaymentDetails(amount: "12z") ;
+            var paymentDetails = CreatePaymentDetails(amount: -54) ;
             await Assert.ThrowsAsync<PaymentValidationException>(async () => await CreatePaymentService().ProcessPaymentAsync(paymentDetails));                
-        }
-
-        [Fact]
-        public async Task Given_12_Dot_5_As_Amount_Assume_ProcessPaymentAsync_Throws_PaymentValidationException()
-        {
-            var paymentDetails = CreatePaymentDetails(amount: "12.5") ;
-            var id = await CreatePaymentService().ProcessPaymentAsync(paymentDetails);
-            
-            Assert.True(id != Guid.Empty);
-        }
-
-       [Fact]
-        public async Task Given_12_Comma_5_As_Amount_Assume_ProcessPaymentAsync_Throws_PaymentValidationException()
-        {
-            var paymentDetails = CreatePaymentDetails(amount: "12,5") ;
-            var initialCulture = CultureInfo.CurrentCulture;
-            CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("de-DE");
-            var id = await CreatePaymentService().ProcessPaymentAsync(paymentDetails);
-            
-            Assert.True(id != Guid.Empty);
-            System.Globalization.CultureInfo.CurrentCulture = initialCulture;
         }
 
         [Fact]
@@ -115,17 +93,19 @@ namespace PaymentGateway.Tests
         }
 
         [Fact]
-        public async Task Given_Not_Sucess_Bank_Transaction_Assume_ProcessPaymentAsync_Throws_ProcessPaymentException()
+        public async Task Given_Transaction_With_Error_Status_Assume_ProcessPaymentAsync_Returns_Payment_With_Error()
         {
             var paymentDetails = CreatePaymentDetails();
-            var bankHttpClientMock = SetupBankApiHttpClientMock(new BankTransaction(){ Status = TransactionStatus.Error });
+            var expectingStatus = PaymentStatus.Error;
+            var bankHttpClientMock = SetupBankApiHttpClientMock(new Transaction(){ Status = (int) expectingStatus });
             var paymentService = CreatePaymentService(bankApiHttpClient: bankHttpClientMock);
 
-            await Assert.ThrowsAsync<ProcessPaymentException>(async () => await paymentService.ProcessPaymentAsync(paymentDetails));
+            var transaction = await paymentService.ProcessPaymentAsync(paymentDetails);
+            Assert.Equal(transaction.Status, expectingStatus);
         }
 
         [Fact]
-        public async Task Unhandled_Exception_Occurs_Assume_ProcessPaymentAsync_Throws_ProcessPaymentException()
+        public async Task Unhandled_Exception_Occurs_Assume_ProcessPaymentAsync_Throws_ProcessPaymentException() 
         {
             var paymentDetails = CreatePaymentDetails();
             var paymentDetailsRepository = new Mock<IPaymentDetailsRepository>();
@@ -135,7 +115,17 @@ namespace PaymentGateway.Tests
             await Assert.ThrowsAsync<ProcessPaymentException>(async () => await paymentService.ProcessPaymentAsync(paymentDetails));
         }   
 
-        private PaymentDetails CreatePaymentDetails(string cardNumber = "1234-1234-1234-1234", string currency = "EUR", string amount = "12.5", string cvv = "123", string expireAt = "12/23") =>
+        [Fact]
+        public async Task Given_Card_Number_Assume_ProcessPaymentAsync_Returns_Payment_With_Masked_CardNumber()
+        {
+            var testCardNumber = "9872-6785-3456-2398";
+            var paymentDetails = CreatePaymentDetails(cardNumber: testCardNumber);
+            Payment payment = await CreatePaymentService().ProcessPaymentAsync(paymentDetails);
+            
+            Assert.Equal("XXXX-XXXX-XXXX-2398", payment.CardNumber);
+        }
+
+        private PaymentDetails CreatePaymentDetails(string cardNumber = "1234-1234-1234-1234", string currency = "EUR", int amount = 125, string cvv = "123", string expireAt = "12/23") =>
             new PaymentDetails() 
             { 
                 CardNumber = cardNumber, 
@@ -160,10 +150,10 @@ namespace PaymentGateway.Tests
             return mock.Object;
         }
 
-        private IBankApiHttpClient SetupBankApiHttpClientMock(BankTransaction transaction = null)
+        private IBankApiHttpClient SetupBankApiHttpClientMock(Transaction transaction = null)
         {
              if (transaction == null)
-                transaction = new BankTransaction(){ Id = Guid.NewGuid(), Status = TransactionStatus.Success };
+                transaction = new Transaction(){ Id = Guid.NewGuid(), Status = (int) PaymentStatus.Completed };
 
             var mock = new Mock<IBankApiHttpClient>();
             mock.Setup(x => x.SubmitPaymentAsync(It.IsAny<PaymentDetails>())).ReturnsAsync(transaction);

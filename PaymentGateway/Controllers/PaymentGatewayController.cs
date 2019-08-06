@@ -44,7 +44,7 @@ namespace checkoutcom.paymentgateway.Controllers
                 if (payment == null)
                     return NotFound();
 
-                return Ok(new { cardNumber = payment.CardNumber, expiryAt = payment.ExpireAt});    
+                return Ok(new { cardNumber = payment.CardNumber, expiryAt = payment.ExpireAt, status = (int)payment.Status });    
             }
             catch(Exception exception)
             {
@@ -66,10 +66,10 @@ namespace checkoutcom.paymentgateway.Controllers
                 if (idempotencyKey != null)
                     return Ok(new { id = idempotencyKey.PaymentId});    
 
-                Guid paymentId = await _paymentService.ProcessPaymentAsync(paymentDetails);
-                await _idempotencyRepository.AddAsync(new IdempotencyKey(idempotencyId, paymentId));
+                Payment payment = await _paymentService.ProcessPaymentAsync(paymentDetails);
+                await _idempotencyRepository.AddAsync(new IdempotencyKey(idempotencyId, payment.Id));
 
-                return CreatedAtAction("post", new { id = paymentId});
+                return CreatedAtAction("post", new { id = payment.Id, statusCode = (int)payment.Status });
             }
             catch (PaymentValidationException validationException)
             {

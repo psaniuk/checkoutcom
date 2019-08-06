@@ -6,6 +6,6 @@ namespace checkoutcom.paymentgateway.Contracts
 {
     public interface IBankApiHttpClient
     {
-        Task<BankTransaction> SubmitPaymentAsync(PaymentDetails payment);
+        Task<Transaction> SubmitPaymentAsync(PaymentDetails payment);
     }
 }
