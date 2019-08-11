@@ -32,14 +32,15 @@ Payment gateway API exposes the following endpoints:
    - _POST /payments_, the endpoint processes a payment.
      Payload: 
 ```
- {
-    "cardNumber": "1234123412341234",
-    "amount": "20.1",
-    "cvv": "123",
-    "currency": "EUR",
-    "expiryAt": "12/23" 
-  }
+{
+	"cardNumber": "1234123412341234",
+	"amount": 2010,
+	"cvv": "123",
+	"currency": "EUR",
+	"expiryAt": "12/23"
+}
  ```
+_Amount_ is Int32 number, which represents a paymnent amount without a decimal separator. It's converted to a decimal number by dividing by 100. For example, when 21 is given as amount, the API will convert it to 21.00. When 234 given as a payment amount, the API will convert it to 23.40. 
 
 Swagger specs ideally should be used to describe the API, but not introduced in the scope of the given task
   
@@ -53,5 +54,16 @@ More advanced security with Authorization is required.
 ## Idempotency
 _POST /payments_ endpoints required _Idempotency-Key_ header which is GUID. IdempotencyKey object is a pair of unique ID of a payment operation and a payment ID. The endpoint validates provided by a client idempotency key. An error is returned if an idempotency key is not valid. 
 
-## Request examples
-
+## Test API
+I prefer to test the API using `curl` with `jq` to format the response. If you don't use `jq` then `| jq "."` can be omitted.
+_POST /payments_
+```
+curl -d '{ "cardNumber": "1234123412341234", "amount": 2010, "cvv": "123", "currency": "EUR", "expiryAt": "12/23" }' \
+-H "Idempotency-Key:87856edf-25a6-4d3f-893a-1cfdc077f218" \
+-H "Content-Type: application/json" \
+-X POST https://localhost:5001/payments --insecure | jq "."
+```
+_GET /payments/{id}_
+```
+curl https://localhost:5001/payments/fdda6719-5314-4418-b126-90ee039c89dc --insecure | jq "."
+```
