@@ -55,7 +55,7 @@ More advanced security with Authorization is required.
 _POST /payments_ endpoints required _Idempotency-Key_ header which is GUID. IdempotencyKey object is a pair of unique ID of a payment operation and a payment ID. The endpoint validates provided by a client idempotency key. An error is returned if an idempotency key is not valid. 
 
 ## Test API
-I prefer to test the API using `curl` with `jq` to format the response. If you don't use `jq` then `| jq "."` can be omitted.
+I prefer to test the API using `curl` or `httpie` with `jq` to format the response. If you don't use `jq` then `| jq "."` can be omitted.
 _POST /payments_
 ```
 curl -d '{ "cardNumber": "1234123412341234", "amount": 2010, "cvv": "123", "currency": "EUR", "expiryAt": "12/23" }' \
