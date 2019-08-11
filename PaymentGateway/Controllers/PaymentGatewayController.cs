@@ -64,7 +64,7 @@ namespace checkoutcom.paymentgateway.Controllers
 
                 var idempotencyKey = await _idempotencyRepository.FindAsync(idempotencyId);
                 if (idempotencyKey != null)
-                    return Ok(new { id = idempotencyKey.PaymentId});    
+                    return Ok(new { id = idempotencyKey.PaymentId });    
 
                 Payment payment = await _paymentService.ProcessPaymentAsync(paymentDetails);
                 await _idempotencyRepository.AddAsync(new IdempotencyKey(idempotencyId, payment.Id));
