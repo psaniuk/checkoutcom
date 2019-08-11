@@ -6,6 +6,7 @@ I assumed that:
 - CVV code contains only 3 digits
 - I can use GUID as an unique identifier
 - a bank simulating can be achieved by mocking bank API communication. Only a success response is mocked but can be easily extended to cover all the cases
+- Swagger specs schould be used for the API description
 
 ## Solution description
 Solution has been built using .Net Core 3.0 using Visual Studio Code as IDE. 
@@ -25,10 +26,32 @@ The solution consists of two projects:
 2. _PaymentGateway.Tests_ - a unit test project for _PaymentGateway_ logic. At the moment only tests for _PaymentService_ are    implemented
 
 ## API description
+Payment gateway API exposes the following endpoints:
+   - _GET /health_, it's used for the health check
+   - _GET /payments/{id}_, the endpoint retrieves a payment details by id. ID should be provided in a query path and be a GUID 
+   - _POST /payments_, the endpoint processes a payment.
+     Payload: 
+```
+ {
+    "cardNumber": "1234123412341234",
+    "amount": "20.1",
+    "cvv": "123",
+    "currency": "EUR",
+    "expiryAt": "12/23" 
+  }
+ ```
+
+Swagger specs ideally should be used to describe the API, but not introduced in the scope of the given task
+  
 ## Localization
+At the moment the API supports _en-US_ and _de-DE_ cultures but can be extended.
+
 ## Security
-## Validation
+The solution relies only on the security level provided by _HTTPS_ protocl, which is not enought for a real payment API.
+More advanced security with Authorization is required.
+
 ## Idempotency
-## Tests
+_POST /payments_ endpoints required _Idempotency-Key_ header which is GUID. IdempotencyKey object is a pair of unique ID of a payment operation and a payment ID. The endpoint validates provided by a client idempotency key. An error is returned if an idempotency key is not valid. 
+
 ## Request examples
-## Swagger specs
+
